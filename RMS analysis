@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from scipy.stats import poisson
 
-# Datos
+#Histograma de RMS de una muestra de nácar
+
 alturas = [
     0, 0.586063, 1.172126, 1.758189, 2.344252, 2.930315, 3.516378, 4.102441, 4.688504, 5.274567,
     5.86063, 6.446693, 7.032756, 7.618819, 8.204882, 8.790945, 9.377008, 9.963071, 10.549134, 11.135197,
@@ -44,15 +44,6 @@ param_lorentz, cov_lorentz = curve_fit(lorentziana, alturas, frecuencias, p0=p0_
 A_lorentz, mu_lorentz, gamma_lorentz = param_lorentz
 frecuencias_lorentz = lorentziana(alturas, A_lorentz, mu_lorentz, gamma_lorentz)
 
-# Ajuste bimodal
-def bimodal(x, A1, mu1, sigma1, A2, mu2, sigma2):
-    return A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2)) + A2 * np.exp(-(x - mu2)**2 / (2 * sigma2**2))
-
-p0_bimodal = [np.max(frecuencias), np.mean(alturas) - 5, np.std(alturas), np.max(frecuencias), np.mean(alturas) + 5, np.std(alturas)]
-param_bimodal, cov_bimodal = curve_fit(bimodal, alturas, frecuencias, p0=p0_bimodal)
-A1_bimodal, mu1_bimodal, sigma1_bimodal, A2_bimodal, mu2_bimodal, sigma2_bimodal = param_bimodal
-frecuencias_bimodal = bimodal(alturas, A1_bimodal, mu1_bimodal, sigma1_bimodal, A2_bimodal, mu2_bimodal, sigma2_bimodal)
-
 # Ajuste trimodal
 def trimodal(x, A1, mu1, sigma1, A2, mu2, sigma2, A3, mu3, sigma3):
     return (A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2)) +
@@ -63,15 +54,6 @@ p0_trimodal = [2000, 15, 5, 2000, 30, 5, 2000, 15, 5]
 param_trimodal, cov_trimodal = curve_fit(trimodal, alturas, frecuencias, p0=p0_trimodal)
 A1_trimodal, mu1_trimodal, sigma1_trimodal, A2_trimodal, mu2_trimodal, sigma2_trimodal, A3_trimodal, mu3_trimodal, sigma3_trimodal = param_trimodal
 frecuencias_trimodal = trimodal(alturas, A1_trimodal, mu1_trimodal, sigma1_trimodal, A2_trimodal, mu2_trimodal, sigma2_trimodal, A3_trimodal, mu3_trimodal, sigma3_trimodal)
-
-# Ajuste de Poisson
-def poissoniana(x, mu):
-    return poisson.pmf(x, mu)
-
-p0_poisson = [np.mean(frecuencias)]
-param_poisson, cov_poisson = curve_fit(poissoniana, np.arange(len(frecuencias)), frecuencias, p0=p0_poisson)
-mu_poisson = param_poisson[0]
-frecuencias_poisson = poissoniana(np.arange(len(frecuencias)), mu_poisson) * np.max(frecuencias)
 
 
 # Coeficientes de determinación
@@ -85,11 +67,6 @@ ss_res_lorentz = np.sum(residuals_lorentz**2)
 ss_tot_lorentz = np.sum((frecuencias - np.mean(frecuencias))**2)
 r_squared_lorentz = 1 - (ss_res_lorentz / ss_tot_lorentz)
 
-residuals_bimodal = frecuencias - frecuencias_bimodal
-ss_res_bimodal = np.sum(residuals_bimodal**2)
-ss_tot_bimodal = np.sum((frecuencias - np.mean(frecuencias))**2)
-r_squared_bimodal = 1 - (ss_res_bimodal / ss_tot_bimodal)
-
 residuals_trimodal = frecuencias - frecuencias_trimodal
 ss_res_trimodal = np.sum(residuals_trimodal**2)
 ss_tot_trimodal = np.sum((frecuencias - np.mean(frecuencias))**2)
@@ -100,9 +77,7 @@ plt.figure(figsize=(10, 6))
 plt.bar(alturas, frecuencias, width=0.4, color='b', alpha=0.7, label='Datos experimentales')
 plt.plot(alturas, frecuencias_gauss, 'r-', label='Ajuste gaussiano')
 plt.plot(alturas, frecuencias_lorentz, 'g--', label='Ajuste lorentziano')
-#plt.plot(alturas, frecuencias_bimodal, 'y-.', label='Ajuste bimodal')
 plt.plot(alturas, frecuencias_trimodal, 'm:', label='Ajuste trimodal')
-#plt.plot(np.arange(len(frecuencias)), frecuencias_poisson, 'c', label='Ajuste Poisson')
 plt.xlabel('Altura [nm]')
 plt.ylabel('Número de eventos')
 plt.title('Distribución de altura de una muestra de nácar')
@@ -117,10 +92,6 @@ print("Desviación estándar del ajuste gaussiano (sigma):", sigma_gauss)
 print("Coeficiente de determinación para ajuste lorentziano:", r_squared_lorentz)
 print("Media del ajuste lorentziano (mu):", mu_lorentz)
 print("Desviación estándar del ajuste lorentziano (gamma):", gamma_lorentz)
-
-#print("Coeficiente de determinación para ajuste bimodal:", r_squared_bimodal)
-#print("Medias del ajuste bimodal (mu1, mu2):", mu1_bimodal, mu2_bimodal)
-#print("Desviaciones estándar del ajuste bimodal (sigma1, sigma2):", sigma1_bimodal, sigma2_bimodal)
 
 print("Coeficiente de determinación para ajuste trimodal:", r_squared_trimodal)
 print("Medias del ajuste trimodal (mu1, mu2, mu3):", mu1_trimodal, mu2_trimodal, mu3_trimodal)
