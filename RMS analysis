@@ -1,0 +1,127 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from scipy.stats import poisson
+
+# Datos
+alturas = [
+    0, 0.586063, 1.172126, 1.758189, 2.344252, 2.930315, 3.516378, 4.102441, 4.688504, 5.274567,
+    5.86063, 6.446693, 7.032756, 7.618819, 8.204882, 8.790945, 9.377008, 9.963071, 10.549134, 11.135197,
+    11.72126, 12.307323, 12.893386, 13.479449, 14.065512, 14.651575, 15.237638, 15.823701, 16.409764,
+    16.995827, 17.58189, 18.167953, 18.754016, 19.340079, 19.926142, 20.512205, 21.098268, 21.684331,
+    22.270394, 22.856457, 23.44252, 24.028583, 24.614646, 25.200709, 25.786772, 26.372835, 26.958898,
+    27.544961, 28.131024, 28.717087, 29.30315, 29.889213, 30.475276, 31.061339, 31.647402, 32.233465,
+    32.819528, 33.405591, 33.991654, 34.577717, 35.16378, 35.749843, 36.335906, 36.921969, 37.508032,
+    38.094095, 38.680158, 39.266221, 39.852284, 40.438347, 41.02441, 41.610473, 42.196536, 42.782599,
+    43.368662, 43.954725, 44.540788, 45.126851, 45.712914, 46.298977, 46.88504, 47.471103, 48.057166,
+    48.643229, 49.229292, 49.815355, 50.401418, 50.987481, 51.573544, 52.159607, 52.74567, 53.331733,
+    53.917796, 54.503859, 55.089922, 55.675985, 56.262048, 56.848111, 57.434174, 58.020237
+]
+
+frecuencias = [
+    7, 20, 38, 59, 46, 60, 41, 42, 111, 152, 199, 275, 430, 563, 915, 1502, 2147, 3149, 3808, 4694, 5687, 6513,
+    7388, 8019, 8739, 8951, 8705, 8841, 8837, 8748, 8902, 8988, 8982, 8782, 8607, 8526, 8050, 7977, 7818, 7364,
+    6855, 6545, 6081, 5837, 5565, 5241, 4735, 4327, 4043, 3698, 3324, 2881, 2613, 2276, 2141, 1841, 1587, 1440,
+    1116, 930, 864, 858, 655, 558, 452, 428, 291, 256, 251, 194, 185, 137, 143, 149, 148, 149, 125, 93, 95, 69,
+    53, 93, 46, 26, 8, 5, 6, 13, 9, 10, 3, 0, 4, 3, 1, 2, 1, 1, 1, 1
+]
+
+# Ajuste gaussiano
+def gaussiana(x, A, mu, sigma):
+    return A * np.exp(-(x - mu)**2 / (2 * sigma**2))
+
+p0_gauss = [np.max(frecuencias), np.mean(alturas), np.std(alturas)]
+param_gauss, cov_gauss = curve_fit(gaussiana, alturas, frecuencias, p0=p0_gauss)
+A_gauss, mu_gauss, sigma_gauss = param_gauss
+frecuencias_gauss = gaussiana(alturas, A_gauss, mu_gauss, sigma_gauss)
+
+# Ajuste lorentziano
+def lorentziana(x, A, mu, gamma):
+    return A / (1 + ((x - mu) / gamma)**2)
+
+p0_lorentz = [np.max(frecuencias), np.mean(alturas), np.std(alturas)]
+param_lorentz, cov_lorentz = curve_fit(lorentziana, alturas, frecuencias, p0=p0_lorentz)
+A_lorentz, mu_lorentz, gamma_lorentz = param_lorentz
+frecuencias_lorentz = lorentziana(alturas, A_lorentz, mu_lorentz, gamma_lorentz)
+
+# Ajuste bimodal
+def bimodal(x, A1, mu1, sigma1, A2, mu2, sigma2):
+    return A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2)) + A2 * np.exp(-(x - mu2)**2 / (2 * sigma2**2))
+
+p0_bimodal = [np.max(frecuencias), np.mean(alturas) - 5, np.std(alturas), np.max(frecuencias), np.mean(alturas) + 5, np.std(alturas)]
+param_bimodal, cov_bimodal = curve_fit(bimodal, alturas, frecuencias, p0=p0_bimodal)
+A1_bimodal, mu1_bimodal, sigma1_bimodal, A2_bimodal, mu2_bimodal, sigma2_bimodal = param_bimodal
+frecuencias_bimodal = bimodal(alturas, A1_bimodal, mu1_bimodal, sigma1_bimodal, A2_bimodal, mu2_bimodal, sigma2_bimodal)
+
+# Ajuste trimodal
+def trimodal(x, A1, mu1, sigma1, A2, mu2, sigma2, A3, mu3, sigma3):
+    return (A1 * np.exp(-(x - mu1)**2 / (2 * sigma1**2)) +
+            A2 * np.exp(-(x - mu2)**2 / (2 * sigma2**2)) +
+            A3 * np.exp(-(x - mu3)**2 / (2 * sigma3**2)))
+
+p0_trimodal = [2000, 15, 5, 2000, 30, 5, 2000, 15, 5]
+param_trimodal, cov_trimodal = curve_fit(trimodal, alturas, frecuencias, p0=p0_trimodal)
+A1_trimodal, mu1_trimodal, sigma1_trimodal, A2_trimodal, mu2_trimodal, sigma2_trimodal, A3_trimodal, mu3_trimodal, sigma3_trimodal = param_trimodal
+frecuencias_trimodal = trimodal(alturas, A1_trimodal, mu1_trimodal, sigma1_trimodal, A2_trimodal, mu2_trimodal, sigma2_trimodal, A3_trimodal, mu3_trimodal, sigma3_trimodal)
+
+# Ajuste de Poisson
+def poissoniana(x, mu):
+    return poisson.pmf(x, mu)
+
+p0_poisson = [np.mean(frecuencias)]
+param_poisson, cov_poisson = curve_fit(poissoniana, np.arange(len(frecuencias)), frecuencias, p0=p0_poisson)
+mu_poisson = param_poisson[0]
+frecuencias_poisson = poissoniana(np.arange(len(frecuencias)), mu_poisson) * np.max(frecuencias)
+
+
+# Coeficientes de determinación
+residuals_gauss = frecuencias - frecuencias_gauss
+ss_res_gauss = np.sum(residuals_gauss**2)
+ss_tot_gauss = np.sum((frecuencias - np.mean(frecuencias))**2)
+r_squared_gauss = 1 - (ss_res_gauss / ss_tot_gauss)
+
+residuals_lorentz = frecuencias - frecuencias_lorentz
+ss_res_lorentz = np.sum(residuals_lorentz**2)
+ss_tot_lorentz = np.sum((frecuencias - np.mean(frecuencias))**2)
+r_squared_lorentz = 1 - (ss_res_lorentz / ss_tot_lorentz)
+
+residuals_bimodal = frecuencias - frecuencias_bimodal
+ss_res_bimodal = np.sum(residuals_bimodal**2)
+ss_tot_bimodal = np.sum((frecuencias - np.mean(frecuencias))**2)
+r_squared_bimodal = 1 - (ss_res_bimodal / ss_tot_bimodal)
+
+residuals_trimodal = frecuencias - frecuencias_trimodal
+ss_res_trimodal = np.sum(residuals_trimodal**2)
+ss_tot_trimodal = np.sum((frecuencias - np.mean(frecuencias))**2)
+r_squared_trimodal = 1 - (ss_res_trimodal / ss_tot_trimodal)
+
+# Gráfico
+plt.figure(figsize=(10, 6))
+plt.bar(alturas, frecuencias, width=0.4, color='b', alpha=0.7, label='Datos experimentales')
+plt.plot(alturas, frecuencias_gauss, 'r-', label='Ajuste gaussiano')
+plt.plot(alturas, frecuencias_lorentz, 'g--', label='Ajuste lorentziano')
+#plt.plot(alturas, frecuencias_bimodal, 'y-.', label='Ajuste bimodal')
+plt.plot(alturas, frecuencias_trimodal, 'm:', label='Ajuste trimodal')
+#plt.plot(np.arange(len(frecuencias)), frecuencias_poisson, 'c', label='Ajuste Poisson')
+plt.xlabel('Altura [nm]')
+plt.ylabel('Número de eventos')
+plt.title('Distribución de altura de una muestra de nácar')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+print("Coeficiente de determinación para ajuste gaussiano:", r_squared_gauss)
+print("Media del ajuste gaussiano (mu):", mu_gauss)
+print("Desviación estándar del ajuste gaussiano (sigma):", sigma_gauss)
+
+print("Coeficiente de determinación para ajuste lorentziano:", r_squared_lorentz)
+print("Media del ajuste lorentziano (mu):", mu_lorentz)
+print("Desviación estándar del ajuste lorentziano (gamma):", gamma_lorentz)
+
+#print("Coeficiente de determinación para ajuste bimodal:", r_squared_bimodal)
+#print("Medias del ajuste bimodal (mu1, mu2):", mu1_bimodal, mu2_bimodal)
+#print("Desviaciones estándar del ajuste bimodal (sigma1, sigma2):", sigma1_bimodal, sigma2_bimodal)
+
+print("Coeficiente de determinación para ajuste trimodal:", r_squared_trimodal)
+print("Medias del ajuste trimodal (mu1, mu2, mu3):", mu1_trimodal, mu2_trimodal, mu3_trimodal)
+print("Desviaciones estándar del ajuste trimodal (sigma1, sigma2, sigma3):", sigma1_trimodal, sigma2_trimodal, sigma3_trimodal)
